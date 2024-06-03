@@ -1,0 +1,38 @@
+version: "3"
+services:
+  client:
+    build:
+      context: .
+      dockerfile: DOCKERFILE-tcpclient
+    volumes:
+      - shared:/usr/src/src/data
+    networks:
+      - shared-network
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      - SERVER_NAME=server
+      - SERVER_PORT=7000
+
+  server:
+    build:
+      context: .
+      dockerfile: DOCKERFILE-tcpserver
+    ports:
+      - "7000:7000"
+    volumes:
+      - shared:/usr/src/src/data
+    networks:
+      - shared-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pgrep -f 'java -jar tcp.TCPServer.jar' || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  shared:
+
+networks:
+  shared-network:
+    driver: bridge
